@@ -5,16 +5,22 @@ using System;
 using System.Text;
 using System.Net.Sockets;
 using System.Net;
+using Unity.Collections;
 
 public class NetworkMan : MonoBehaviour
 {
+    List<GameObject> GameList;
     public UdpClient udp;
+    public GameObject PlayObject;
+
     // Start is called before the first frame update
     void Start()
     {
         udp = new UdpClient();
         
-        udp.Connect("PUT_IP_ADDRESS_HERE",12345);
+        udp.Connect("52.199.251.236", 12345);
+
+        GameList = new List<GameObject>();
 
         Byte[] sendBytes = Encoding.ASCII.GetBytes("connect");
       
@@ -32,7 +38,9 @@ public class NetworkMan : MonoBehaviour
 
     public enum commands{
         NEW_CLIENT,
-        UPDATE
+        UPDATE,
+        NEW_PLAYERS,
+        DESTROY_PLAYER
     };
     
     [Serializable]
@@ -54,7 +62,7 @@ public class NetworkMan : MonoBehaviour
 
     [Serializable]
     public class NewPlayer{
-        
+        public Player player;
     }
 
     [Serializable]
@@ -62,8 +70,18 @@ public class NetworkMan : MonoBehaviour
         public Player[] players;
     }
 
+    [Serializable]
+    public class DestroyCube
+    {
+        public NewPlayer[] players;
+    }
+
     public Message latestMessage;
+    public NewPlayer playerOne;
     public GameState lastestGameState;
+    public GameState newGameState;
+    public DestroyCube outPlayers;
+
     void OnReceived(IAsyncResult result){
         // this is what had been passed into BeginReceive as the second parameter:
         UdpClient socket = result.AsyncState as UdpClient;
@@ -82,9 +100,20 @@ public class NetworkMan : MonoBehaviour
         try{
             switch(latestMessage.cmd){
                 case commands.NEW_CLIENT:
+                    playerOne = JsonUtility.FromJson<NewPlayer>(returnData);
+                    Debug.Log(playerOne.player.id);
+
                     break;
                 case commands.UPDATE:
                     lastestGameState = JsonUtility.FromJson<GameState>(returnData);
+                    break;
+                case commands.NEW_PLAYERS:
+                    newGameState = JsonUtility.FromJson<GameState>(returnData);
+                    break;
+
+                case commands.DESTROY_PLAYER:
+                    outPlayers = JsonUtility.FromJson<DestroyCube> (returnData);
+                    Debug.Log(outPlayers.players);
                     break;
                 default:
                     Debug.Log("Error");
@@ -101,16 +130,63 @@ public class NetworkMan : MonoBehaviour
 
     void SpawnPlayers(){
 
+        foreach (Player NewCharacter in newGameState.players)
+        {
+            Vector3 VPoint = new Vector3(UnityEngine.Random.Range(-4, 4), UnityEngine.Random.Range(-4, 4), UnityEngine.Random.Range(0, 4));
+            foreach (GameObject playerCube in GameObject.FindGameObjectsWithTag("Player"))
+            {
+                foreach (GameObject playerObjet in GameList)
+                {
+                    if (playerCube.GetComponent<PlayerCubeID>().UpdateID == NewCharacter.id)
+                    {
+                        return;
+                    }
+
+                }
+
+            }
+
+            GameObject CubePlayer = Instantiate(PlayObject, VPoint, Quaternion.identity);
+            CubePlayer.GetComponent<PlayerCubeID>().UpdateID = NewCharacter.id;
+            GameList.Add(CubePlayer);
+        }
+
+
     }
 
     void UpdatePlayers(){
+
+        if (lastestGameState.players.Length > GameList.Count)
+        {
+            foreach (Player p in lastestGameState.players)
+            {
+                Vector3 VPoint = new Vector3(UnityEngine.Random.Range(-4, 4), UnityEngine.Random.Range(-4, 4), UnityEngine.Random.Range(0, 4));
+                GameObject NewPlayer = Instantiate(PlayObject, VPoint, Quaternion.identity);
+                NewPlayer.GetComponent<PlayerCubeID>().UpdateID = p.id;
+                GameList.Add(NewPlayer);
+            }
+        }
+
+        foreach (Player CPlayer in lastestGameState.players)
+        {
+            foreach(GameObject CubeColor in GameList)
+            {
+                if (CPlayer.id.Equals(CubeColor.GetComponent<PlayerCubeID>().UpdateID))
+                {
+                    CubeColor.GetComponent<MeshRenderer>().material.color = new Color(CPlayer.color.R, CPlayer.color.G, CPlayer.color.B);
+
+                }
+
+            }
+
+        }
 
     }
 
     void DestroyPlayers(){
 
     }
-    
+
     void HeartBeat(){
         Byte[] sendBytes = Encoding.ASCII.GetBytes("heartbeat");
         udp.Send(sendBytes, sendBytes.Length);
