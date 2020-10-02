@@ -5,7 +5,6 @@ using UnityEngine;
 public class PlayerCubeID : MonoBehaviour
 {
     public string UpdateID =" "; 
-    public string networkID;
     // Start is called before the first frame update
     void Start()
     {
