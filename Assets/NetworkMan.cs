@@ -158,11 +158,11 @@ public class NetworkMan : MonoBehaviour
 
         if (lastestGameState.players.Length > GameList.Count)
         {
-            foreach (Player p in lastestGameState.players)
+            foreach (Player Players in lastestGameState.players)
             {
                 Vector3 VPoint = new Vector3(UnityEngine.Random.Range(-4, 4), UnityEngine.Random.Range(-4, 4), UnityEngine.Random.Range(0, 4));
                 GameObject NewPlayer = Instantiate(PlayObject, VPoint, Quaternion.identity);
-                NewPlayer.GetComponent<PlayerCubeID>().UpdateID = p.id;
+                NewPlayer.GetComponent<PlayerCubeID>().UpdateID = Players.id;
                 GameList.Add(NewPlayer);
             }
         }
