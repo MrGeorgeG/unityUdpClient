@@ -4,25 +4,20 @@ using UnityEngine;
 
 public class PlayerCubeID : MonoBehaviour
 {
-    public string UpdateID =" "; 
+
+    [SerializeField]
+    float speed = 10;
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
-    }
+        Vector3 movementVector = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0);
+        movementVector *= speed;
 
-    public void PlayerMaterial(Color C)
-    {
-        Renderer PlayerRender = GetComponent<Renderer>();
-        if (PlayerRender)
-        {
-            PlayerRender.material.SetColor("_Color", C);
-        }
     }
 }
