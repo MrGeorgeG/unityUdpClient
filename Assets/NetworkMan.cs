@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
@@ -53,13 +53,13 @@ public class NetworkMan : MonoBehaviour
     /// <summary>
     /// A structure that replicates our server color dictionary
     /// </summary>
-    //[Serializable]
-    //public struct receivedColor
-    //{
-    //    public float R;
-    //    public float G;
-    //    public float B;
-    //}
+    [Serializable]
+    public struct receivedColor
+    {
+        public float R;
+        public float G;
+        public float B;
+    }
 
     [Serializable]
     public struct receivedVector
@@ -121,7 +121,7 @@ public class NetworkMan : MonoBehaviour
     /// </summary>
     public enum commands
     {
-        PLAYER_CONNECTED,       //0
+        PLAYER_CONNECTED,       // 0
         GAME_UPDATE,            // 1
         PLAYER_DISCONNECTED,    // 2
         CONNECTION_APPROVED,    // 3
@@ -201,8 +201,8 @@ public class NetworkMan : MonoBehaviour
             foreach (string playerID in newPlayers)
             {
                 currentPlayers.Add(playerID, Instantiate(playerGO, new Vector3(0, 0, 0), Quaternion.identity));
-                currentPlayers[playerID]. = new Vector3(player.point.x, player.point.y, player.point.z)
                 currentPlayers[playerID].name = playerID;
+
             }
             newPlayers.Clear();
         }
@@ -214,7 +214,7 @@ public class NetworkMan : MonoBehaviour
                 if (player.id == myAddress)
                     continue;
                 currentPlayers.Add(player.id, Instantiate(playerGO, new Vector3(10, 0, 0), Quaternion.identity));
-                currentPlayers[player.id].GetComponent<Renderer>().material.color = new Color(player.color.R, player.color.G, player.color.B);
+                
                 currentPlayers[player.id].name = player.id;
             }
             initialSetofPlayers.players = new Player[0];
@@ -228,11 +228,11 @@ public class NetworkMan : MonoBehaviour
             foreach (NetworkMan.Player player in lastestGameState.players)
             {
                 string playerID = player.id;
-                currentPlayers[player.id].GetComponent<Renderer>().material.color = new Color(player.color.R, player.color.G, player.color.B);
+                currentPlayers[playerID].AddComponent<PlayerCubeID>();
+                currentPlayers[playerID].GetComponent<Renderer>().material.color = new Color(player.color.R, player.color.G, player.color.B);
             }
             lastestGameState.players = new Player[0];
         }
-
     }
 
     void DestroyPlayers()
@@ -252,20 +252,9 @@ public class NetworkMan : MonoBehaviour
 
     void HeartBeat()
     {
+        Byte[] sendBytes = Encoding.ASCII.GetBytes(JsonUtility.ToJson(playerGO));
+        udp.Send(sendBytes, sendBytes.Length);
 
-        if (lastestGameState.players.Length > 0)
-        {
-            foreach (NetworkMan.Player VPlayer in lastestGameState.players)
-            {
-                string playerID = player.id;
-                currentPlayers[player.id].transform.position = player.location;
-
-                Byte[] sendBytes = Encoding.ASCII.GetBytes(JsonUtility.ToJson(playerGO));
-                udp.Send(sendBytes, sendBytes.Length);
-
-            }
-
-        }
     }
 
     void Update()
